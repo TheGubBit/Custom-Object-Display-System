@@ -14,7 +14,7 @@ local Players = game:GetService("Players")
 local Camera = workspace.CurrentCamera
 
 local RenderObjectFolder do
-	RenderObjectFolder = RenderObjectFolder:FindFirstChild("RenderObject")
+	RenderObjectFolder = workspace:FindFirstChild("RenderObject")
 	if not RenderObjectFolder then
 		RenderObjectFolder = Instance.new("Folder", workspace)
 		RenderObjectFolder.Name = "RenderObject"
