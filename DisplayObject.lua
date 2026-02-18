@@ -1,3 +1,11 @@
+--[[
+DisplayObject.lua by TheGreenBit
+Uploaded to Github 18/02/2026
+
+Example script requires this module from a specific location.
+ReplicatedStorage -> Modules -> DisplayObject
+]]
+
 --[[ Types ]]
 type TransparencyClass = Part|WedgePart|MeshPart|TrussPart|Decal|Texture
 type VisibleClass = SurfaceGui
