@@ -21,7 +21,6 @@ local RenderObjectFolder do
 	end
 end
 
-
 local ObjectViewports do
 	ObjectViewports = script.Parent:FindFirstChild("ObjectViewports")
 	if not ObjectViewports then
@@ -50,7 +49,7 @@ local function RenderObject(Object:BasePart)
 	if DisplayObject then
 		Object.DescendantAdded:Connect(function(Object:BasePart)
 			if DisplayObject.Objects[Object] then return end
-			
+
 			local ParentObjectInfo = DisplayObject.Objects[Object.Parent]
 			DisplayObject:AddToDrawList(DisplayObject:Replicate(Object, ParentObjectInfo and ParentObjectInfo.Replica or DisplayObject.BaseReplica))
 		end)
@@ -61,28 +60,28 @@ local function RenderObject(Object:BasePart)
 
 		table.insert(Render, DisplayObject)
 	end
-	
+
 	return DisplayObject
 end
 
 local function CharacterAdded(Character:Model, Player:Player)
 	task.spawn(function()
 		local Humanoid:Humanoid = Character:WaitForChild("Humanoid")
-		if not Humanoid:GetAttribute("DescriptionLoaded") then
+		if not Player:HasAppearanceLoaded() then
 			Humanoid.ApplyDescriptionFinished:Wait()
 		end
 
 		local PlayerRenderObject = RenderObject(Character)
-		
+
 		if Player == Players.LocalPlayer then
 			LocalPlayerDisplayObject = PlayerRenderObject
 		end
-		
+
 		if Humanoid.Health <= 0 then
 			PlayerRenderObject:Destroy()
 			return
 		end
-		
+
 		Humanoid.Died:Once(function()
 			PlayerRenderObject:Destroy()
 		end)
@@ -107,7 +106,7 @@ end)
 
 for _, Player:Player in ipairs(Players:GetChildren()) do
 	if Player.Character then CharacterAdded(Player.Character, Player) end
-		
+
 	Player.CharacterAdded:Connect(function(Character:Model)
 		CharacterAdded(Character, Player)
 	end)
@@ -119,11 +118,11 @@ local RenderCount = 0
 RunService:BindToRenderStep("objectDisplayUpdate", 250, function(dt)
 	local UpdateObjects = false
 	local UpdateTransparency = false
-	
+
 	FramerateDebounce = FramerateDebounce + dt
 	if FramerateDebounce > Framerate then
 		FramerateDebounce = FramerateDebounce % Framerate
-		
+
 		RenderCount = RenderCount + 1
 		if RenderCount >= RenderCountUpdateTransparency then
 			RenderCount = 0
@@ -131,15 +130,15 @@ RunService:BindToRenderStep("objectDisplayUpdate", 250, function(dt)
 		end
 		UpdateObjects = true
 	end
-	
+
 	for _, ObjectInfo in ipairs(Render) do
 		ObjectInfo:UpdateScreen()
-		
+
 		if UpdateObjects then
 			ObjectInfo:UpdateObjects(UpdateTransparency)
 		end
 	end
-	
+
 	if LocalPlayerDisplayObject then
 		local PlaneDirection = (Camera.CFrame.Position - LocalPlayerDisplayObject.DisplayPart.Position) * Vector3.new(1,0,1)
 		LocalPlayerDisplayObject.Transparency = math.clamp(1.5 - PlaneDirection.Magnitude / 2, 0, 1)
