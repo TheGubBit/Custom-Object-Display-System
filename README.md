@@ -7,7 +7,8 @@ An example local script is given on how to use this module. The example local sc
 Place the GUI with the example local script, inside of StarterGui.<br>
 **Make sure Reset on spawn is off!**
 <br>
-<img width="165" height="57" alt="image" src="https://github.com/user-attachments/assets/e1e2203f-6b14-4c88-81ea-893410608c1e" />
+<img width="165" height="57" alt="image" src="https://github.com/user-attachments/assets/e1e2203f-6b14-4c88-81ea-893410608c1e" /><br>
+The example script also needs a folder in the workspace named "RenderObject", this is where you place the ingame objects you want to render in.
 
 Please give credit when using or showcasing this module, that would be awesome thank you! <3
 
