@@ -9,6 +9,6 @@ Place the GUI with the example local script, inside of StarterGui.<br>
 <br>
 <img width="165" height="57" alt="image" src="https://github.com/user-attachments/assets/e1e2203f-6b14-4c88-81ea-893410608c1e" />
 
-If any issues occur please contact me directly through Bluesky or Discord.
-[Bluesky](https://bsky.app/profile/thegreenbit.bsky.social)
-[Discord](https://discord.gg/b8XmdtDVtW)
+Please give credit when using or showcasing this module, that would be awesome thank you! <3
+
+If any issues occur please contact me directly through [Bluesky](https://bsky.app/profile/thegreenbit.bsky.social) or on Discord *Username thegreenbit*.
