@@ -9,7 +9,7 @@ ReplicatedStorage -> Modules -> DisplayObject
 --[[ Types ]]
 type TransparencyClass = Part|WedgePart|MeshPart|TrussPart|Decal|Texture
 type VisibleClass = SurfaceGui
-type ReplicationClass = TransparencyClass|VisibleClass|Accessory|Humanoid|BodyColors|SpecialMesh|Shirt|Pants
+type ReplicationClass = TransparencyClass|VisibleClass|Accessory|Humanoid|BodyColors|SpecialMesh|Shirt|Pants|WrapLayer|SurfaceAppearance
 type DrawClass = Part|WedgePart|MeshPart|TrussPart
 
 type ObjectInfo = {
@@ -36,7 +36,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ Objects ]]
 local Storage do
-	Storage = ReplicatedStorage:WaitForChild("Storage")
+	Storage = ReplicatedStorage:FindFirstChild("Storage")
 	if not Storage then
 		Storage = Instance.new("Folder", ReplicatedStorage)
 		Storage.Name = "Storage"
@@ -74,7 +74,9 @@ local REPLICATION_CLASS = {
 	["BodyColors"] = true,
 	["SpecialMesh"] = true,
 	["Shirt"] = true,
-	["Pants"] = true
+	["Pants"] = true,
+	["WrapLayer"] = true,
+	["SurfaceAppearance"] = true
 }
 
 local DRAW_CLASS = {
@@ -90,47 +92,47 @@ DisplayObject.__index = DisplayObject
 --[[ Functions ]]
 function DisplayObject:GetCamera():Camera
 	if self.Camera then return self.Camera end
-	
+
 	local Camera = Instance.new("Camera", workspace)
 	Camera.Name = "ObjectRenderCamera"
 	Camera.Focus = CFrame.new()
 	Camera.CFrame = CFrame.new(0,0,-200) * CFrame.Angles(0,math.rad(180),0)
 	Camera.FieldOfView = 4.4
 	Camera.FieldOfViewMode = Enum.FieldOfViewMode.Vertical
-	
+
 	rawset(DisplayObject, "Camera", Camera)
 	return Camera
 end
 
 function DisplayObject:GetDisplayObjectStorageFolder():Folder
 	if self.DisplayObjectStorage then return self.DisplayObjectStorage end
-	
+
 	self.DisplayObjectStorage = Storage:FindFirstChild("DisplayObjectStorage")
 	if not self.DisplayObjectStorage then
 		self.DisplayObjectStorage = Instance.new("Folder", Storage)
 		self.DisplayObjectStorage.Name = "DisplayObjectStorage"
 	end
-	
+
 	if self.DisplayObjectStorage then
 		rawset(DisplayObject, "DisplayObjectStorage", self.DisplayObjectStorage)
 	end
-	
+
 	return self.DisplayObjectStorage
 end
 
 function DisplayObject:GetDisplayObjectFolder():Folder
 	if self.DisplayObjectFolder then return self.DisplayObjectFolder end
-	
+
 	self.DisplayObjectFolder = workspace:FindFirstChild("DisplayObject")
 	if not self.DisplayObjectFolder then
 		self.DisplayObjectFolder = Instance.new("Folder", workspace)
 		self.DisplayObjectFolder.Name = "DisplayObject"
 	end
-	
+
 	if self.DisplayObjectFolder then
 		rawset(DisplayObject, "DisplayObjectFolder", self.DisplayObjectFolder)
 	end
-	
+
 	return self.DisplayObjectFolder
 end
 
@@ -143,7 +145,7 @@ function DisplayObject:CreateSurfaceGui(Parent:Instance):SurfaceGui
 	SurfaceGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	SurfaceGui.PixelsPerStud = 50
 	SurfaceGui.ZOffset = 1
-	
+
 	return SurfaceGui
 end
 
@@ -153,7 +155,7 @@ function DisplayObject:CreateViewport(Parent:Instance):ViewportFrame
 	Viewport.Size = UDim2.fromScale(1, 1)
 	Viewport.CurrentCamera = self.Camera
 	Viewport.BackgroundColor3 = Color3.new()
-	
+
 	return Viewport
 end
 
@@ -166,7 +168,7 @@ function DisplayObject:CreateDisplayPart():BasePart
 	DisplayPart.CanQuery = false
 	DisplayPart.Transparency = 1
 	DisplayPart.Size = Vector3.new(15, 15, 0.001)
-	
+
 	return DisplayPart
 end
 
@@ -174,9 +176,9 @@ function DisplayObject:GetScreen(Parent:Instance):{SurfaceGui:SurfaceGui, Viewpo
 	if not self.SurfaceGui then self.SurfaceGui = self:CreateSurfaceGui(Parent) end
 	if not self.Viewport then self.Viewport = self:CreateViewport(self.SurfaceGui) end
 	if not self.DisplayPart then self.DisplayPart = self:CreateDisplayPart() end
-	
+
 	self.SurfaceGui.Adornee = self.DisplayPart
-	
+
 	return {
 		SurfaceGui = self.SurfaceGui,
 		Viewport = self.Viewport,
@@ -186,34 +188,35 @@ end
 
 function DisplayObject:CanReplicate(Object:Instance):boolean
 	if not (Object and REPLICATION_CLASS[Object.ClassName]) then return false end
-	
+
 	return true
 end
 
 function DisplayObject:Replicate(Object:Instance, Parent:Instance, Hide:boolean, IncludeChildren:boolean):ReplicationClass
 	if not self.Objects then self.Objects = {} end
-	
+
 	if Hide == nil then Hide = true end
 	if IncludeChildren == nil then IncludeChildren = true end
-	
+
 	if not self:CanReplicate(Object) then
 		return
 	end
-	
+
 	if not self.Objects[Object] then
 		self.Objects[Object] = {}
 	end
-	
+
 	local ObjectTable = self.Objects[Object]
 	if not ObjectTable.Base then ObjectTable.Base = Object end
-		
+
 	if not ObjectTable.Replica then
+		Object.Archivable = true
 		local Replica = Object:Clone()
 		Replica.Parent = Parent
-		
+
 		ObjectTable.Replica = Replica
 	end
-	
+
 	local OriginalTransparency = Object:GetAttribute("OriginalTransparency")
 
 	if OriginalTransparency then
@@ -240,23 +243,23 @@ function DisplayObject:Replicate(Object:Instance, Parent:Instance, Hide:boolean,
 			end
 		end
 	end
-	
+
 	if not ObjectTable.Parent then
 		ObjectTable.Parent = Parent
 	end
-	
+
 	if not ObjectTable.Offset then
 		ObjectTable.Offset = CFrame.new()
 	end
-	
+
 	if ObjectTable.Base:IsA("BasePart") then
 		ObjectTable.Offset = ObjectTable.Offset * ObjectTable.Base.PivotOffset:Inverse()
 	end
-	
+
 	if ObjectTable.Replica:IsA("BasePart") then
 		ObjectTable.Offset = ObjectTable.Offset * ObjectTable.Replica.PivotOffset
 	end
-	
+
 	if Hide then
 		if TRANSPARENCY_CLASS[Object.ClassName] then
 			if not Object:GetAttribute("OriginalTransparency") then
@@ -264,12 +267,12 @@ function DisplayObject:Replicate(Object:Instance, Parent:Instance, Hide:boolean,
 			end
 			Object.Transparency = 1
 		end
-		
+
 		if VISIBLE_CLASS[Object.ClassName] then
 			Object.Visible = false
 		end
 	end
-	
+
 	return ObjectTable
 end
 
@@ -283,7 +286,7 @@ end
 
 function DisplayObject:AddToDrawList(ObjectInfo:ObjectInfo)
 	if not ObjectInfo then return end
-	
+
 	if not self.DrawList then self.DrawList = {} end
 
 	if ObjectInfo.Base and ObjectInfo.Replica and DRAW_CLASS[ObjectInfo.Base.ClassName] then
@@ -295,9 +298,9 @@ end
 
 function DisplayObject:UpdateDrawList()
 	assert(self.Objects, "[!] Objects list does not exist!")
-	
+
 	if not self.DrawList then self.DrawList = {} end
-	
+
 	for _, ObjectInfo:ObjectInfo in pairs(self.Objects) do
 		if ObjectInfo.Replica == self.BaseReplica then continue end
 		self:AddToDrawList(ObjectInfo)
@@ -308,22 +311,22 @@ function DisplayObject:Destroy()
 	if self.OnDestroy then
 		self.OnDestroy()
 	end
-	
+
 	if self.DisplayPart then self.DisplayPart.Parent = nil end
 	if self.SurfaceGui then self.SurfaceGui.Parent = nil end
-	
+
 	for _, ObjectInfo:ObjectInfo in pairs(self.Objects) do
 		if ObjectInfo.Replica then
 			ObjectInfo.Replica:Destroy()
 		end
 	end
-	
+
 	self.Objects = {}
 end
 
 function DisplayObject:RoundRotation(X:number, Y:number, Z:number)
 	local RadianSnapPoint = self.SnapPoints / (math.pi * 2)
-	
+
 	return math.round(X * RadianSnapPoint) / RadianSnapPoint, math.round(Y * RadianSnapPoint) / RadianSnapPoint, math.round(Z * RadianSnapPoint) / RadianSnapPoint
 end
 
@@ -351,68 +354,68 @@ function DisplayObject:SetOcclusion(State:boolean)
 		if self.SurfaceGui then
 			self.SurfaceGui.Enabled = not State
 		end
-		
+
 		self:UpdateTransparency()
 	end
 end
 
 function DisplayObject:UpdateScreen()
 	if not self.BaseObject then return end
-	
+
 	if not self.DisplayPart then return end
-	
+
 	if self.Viewport then
 		self.Viewport.ImageTransparency = self.Transparency
 	end
-	
+
 	if self.Transparency >= 1 then return end
-	
+
 	local Position = self.BaseObject:GetPivot().Position
-	
+
 	local Direction = Position - Camera.CFrame.Position
-	
+
 	if Direction.Magnitude > self.RenderDistance then
 		self:SetOcclusion(true)
 		return
 	end
-	
+
 	if Camera.CFrame.LookVector:Dot(Direction.Unit) < math.cos(math.rad(Camera.FieldOfView)) then
 		self:SetOcclusion(true)
 		return
 	end
 
 	self:SetOcclusion(false)
-	
+
 	self.DisplayPart.CFrame = CFrame.lookAt(Position, Camera.CFrame.Position * Vector3.new(1, 0, 1) + Vector3.new(0, Position.Y, 0))
 end
 
 function DisplayObject:UpdateObjects(UpdateTransparency:boolean)
 	if self.Transparency >= 1 then return end
-	
+
 	if self.Occluded then return end
-	
+
 	if not self.DrawList then return end
-	
+
 	local DisplayPartPivot:CFrame = self.DisplayPart:GetPivot()
-	
+
 	local BasePartPivot:CFrame = self.BaseObjectInfo.Base:GetPivot() * self.BaseObjectInfo.Offset
 	local BaseOrigin:CFrame = CFrame.new(DisplayPartPivot.Position) * BasePartPivot.Rotation * CFrame.Angles(self:RoundRotation(BasePartPivot:ToEulerAnglesXYZ())):Inverse() * CFrame.Angles(self:RoundRotation(DisplayPartPivot:ToEulerAnglesXYZ()))
-	
+
 	for _, ObjectInfo:ObjectInfo in ipairs(self.DrawList) do
 		if not (ObjectInfo.Base and ObjectInfo.Replica) then warn(ObjectInfo.Base, ObjectInfo.Replica,"Missing!") continue end
-		
+
 		if not ObjectInfo.Base:IsDescendantOf(self.BaseObject) then
 			ObjectInfo.Replica.Parent = self.DisplayObjectStorage
 			continue
 		end
-		
+
 		if ObjectInfo.Replica:IsDescendantOf(self.DisplayObjectStorage) then
 			ObjectInfo.Replica.Parent = ObjectInfo.Parent or self.SurfaceGui
 		end
-		
+
 		ObjectInfo.Replica:PivotTo(BaseOrigin:ToObjectSpace(ObjectInfo.Base:GetPivot()) * (ObjectInfo.Offset or CFrame.new(0, 0, 0)))
 	end
-	
+
 	if UpdateTransparency then
 		self:UpdateTransparency()
 	end
@@ -420,7 +423,7 @@ end
 
 function DisplayObject:ReplicaToOriginal(Replica:Instance)
 	if not Replica then return end
-	
+
 	for _, ObjectInfo:ObjectInfo in pairs(self.Objects) do
 		if ObjectInfo.Replica == Replica then
 			return ObjectInfo.Base
@@ -431,32 +434,34 @@ end
 --Render Object : BasePart | SurfaceGui's Parent : Instance
 function DisplayObject.new(Object:BasePart, Parent:Instance):DisplayObject
 	assert(Parent, "[!] Parent not found!")
-	if not (Object and (Object:IsA("BasePart") or Object:IsA("Model"))) then return end
-	
+	assert(Object, "[!] Object not found!")
+	if not (Object:IsA("BasePart") or Object:IsA("Model")) then return end
+
 	warn("[+] Rendering "..Object.Name)
-	
+
 	local self = setmetatable({}, DisplayObject)
 	self.Camera = self:GetCamera()
 	self.DisplayObjectFolder = self:GetDisplayObjectFolder()
 	self.DisplayObjectStorage = self:GetDisplayObjectStorageFolder()
-	
+
 	self.Transparency = 0
 	self.RenderDistance = 256
 	self.SnapPoints = 16
 	self.BaseObject = Object
-	
+
 	self.Occluded = false
 	self.Screen = self:GetScreen(Parent)
 	
+	assert(self.Viewport, "[!] No Viewport")
 	self.BaseObjectInfo = self:Replicate(Object, self.Viewport)
 	self.BaseReplica = self.BaseObjectInfo.Replica
-	
+
 	Object.Destroying:Once(function()
 		self:Destroy()
 	end)
-	
+
 	self:UpdateDrawList()
-	
+
 	return self
 end
 
