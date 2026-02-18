@@ -424,8 +424,10 @@ end
 
 --Render Object : BasePart | SurfaceGui's Parent : Instance
 function DisplayObject.new(Object:BasePart, Parent:Instance):DisplayObject
-	warn(Object)
+	assert(Parent, "[!] Parent not found!")
 	if not (Object and (Object:IsA("BasePart") or Object:IsA("Model"))) then return end
+	
+	warn("[+] Rendering "..Object.Name)
 	
 	local self = setmetatable({}, DisplayObject)
 	self.Camera = self:GetCamera()
