@@ -13,7 +13,14 @@ local Players = game:GetService("Players")
 --[[ Objects ]]
 local Camera = workspace.CurrentCamera
 
-local RenderObjectFolder = workspace:WaitForChild("RenderObject")
+local RenderObjectFolder do
+	RenderObjectFolder = RenderObjectFolder:FindFirstChild("RenderObject")
+	if not RenderObjectFolder then
+		RenderObjectFolder = Instance.new("Folder", workspace)
+		RenderObjectFolder.Name = "RenderObject"
+	end
+end
+
 
 local ObjectViewports do
 	ObjectViewports = script.Parent:FindFirstChild("ObjectViewports")
