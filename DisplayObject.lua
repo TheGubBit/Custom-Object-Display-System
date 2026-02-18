@@ -35,7 +35,13 @@ type DisplayObject = {
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --[[ Objects ]]
-local Storage = ReplicatedStorage:WaitForChild("Storage")
+local Storage do
+	Storage = ReplicatedStorage:WaitForChild("Storage")
+	if not Storage then
+		Storage = Instance.new("Folder", ReplicatedStorage)
+		Storage.Name = "Storage"
+	end
+end
 
 local Camera = workspace.CurrentCamera
 
